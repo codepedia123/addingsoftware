@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://thunkable.github.io/webviewer-extension/thunkableWebviewerExtension.js" type="text/javascript"></script>
+    <title>JSON Array Manipulation with Thunkable</title>
+</head>
+<body>
+    <h2>JSON Array Manipulation with Thunkable</h2>
+    
+    <label for="existingJson">Input Existing JSON:</label><br>
+    <textarea id="existingJson" rows="10" cols="50"></textarea><br><br>
+
+    <label for="newItemJson">Item JSON to Add:</label><br>
+    <textarea id="newItemJson" rows="10" cols="50"></textarea><br><br>
+
+    <button onclick="manualAddItem()">Add Item</button><br><br>
+
+    <h3>Updated JSON:</h3>
+    <pre id="result"></pre>
+
+    <script>
+        // Variables to store the received JSON and item
+        let currentJson = null;
+        let jsonItemToAdd = null;
+
+        // Function to process and update the JSON
+        function processJson() {
+            if (currentJson && jsonItemToAdd) {
+                try {
+                    // Parse the JSON strings
+                    let existingJson = JSON.parse(currentJson);
+                    const newItemJson = JSON.parse(jsonItemToAdd);
+
+                    // Ensure the existing JSON is an array
+                    if (!Array.isArray(existingJson)) {
+                        // If it's not an array, convert it into one
+                        existingJson = [existingJson];
+                    }
+
+                    // Add the new item to the existing array
+                    existingJson.push(newItemJson);
+
+                    // Convert the updated array back to a JSON string
+                    const updatedJsonStr = JSON.stringify(existingJson, null, 4);
+
+                    // Display the updated JSON
+                    document.getElementById('result').textContent = updatedJsonStr;
+
+                    // Post the updated JSON back to Thunkable Web Viewer
+                    ThunkableWebviewerExtension.postMessage(updatedJsonStr);
+                } catch (error) {
+                    alert('An error occurred while processing the JSON.');
+                }
+            }
+        }
+
+        // Function to manually add item using inputs
+        function manualAddItem() {
+            currentJson = document.getElementById('existingJson').value;
+            jsonItemToAdd = document.getElementById('newItemJson').value;
+            processJson();
+        }
+
+        // Thunkable Web Viewer receive message
+        ThunkableWebviewerExtension.receiveMessage(function(message) {
+            if (message.charAt(0) === '&') {
+                // The current JSON value
+                currentJson = message.substring(1);
+                document.getElementById('existingJson').value = currentJson;
+            } else if (message.charAt(0) === '%') {
+                // The JSON item to add
+                jsonItemToAdd = message.substring(1);
+                document.getElementById('newItemJson').value = jsonItemToAdd;
+            }
+
+            // If both values are received, process the updated JSON
+            processJson();
+        });
+    </script>
+</body>
+</html>
